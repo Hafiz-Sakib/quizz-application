@@ -298,7 +298,7 @@ function App() {
           </div>
         ) : (
           <div>
-            {/* Progress Bar */}
+            {/* Progress Bar Indicator */}
             <div className="mb-4">
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
