@@ -112,7 +112,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 If you have any questions or suggestions, feel free to reach out:
 
-- **GitHub:** [@your-username](https://github.com/hafiz-sakib)
+- **GitHub:** [@Sakib](https://github.com/hafiz-sakib)
 - **Email:** hafizsakib5@gmail.com
 
 Thank you for checking out the **Quiz App**! 🎉 Happy quizzing! 🧠✨
