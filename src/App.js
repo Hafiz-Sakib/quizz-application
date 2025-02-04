@@ -26,10 +26,39 @@ const mockQuestions = [
   },
 ];
 
+// Map category names to OpenTDB numeric IDs
+const categoryMapping = {
+  any: "",
+  "General Knowledge": "9",
+  "Entertainment: Books": "10",
+  "Entertainment: Film": "11",
+  "Entertainment: Music": "12",
+  "Entertainment: Musicals & Theatres": "13",
+  "Entertainment: Television": "14",
+  "Entertainment: Video Games": "15",
+  "Entertainment: Board Games": "16",
+  "Science & Nature": "17",
+  "Science: Computers": "18",
+  "Science: Mathematics": "19",
+  Mythology: "20",
+  Sports: "21",
+  Geography: "22",
+  History: "23",
+  Politics: "24",
+  Art: "25",
+  Celebrities: "26",
+  Animals: "27",
+  Vehicles: "28",
+  "Entertainment: Comics": "29",
+  "Science: Gadgets": "30",
+  "Entertainment: Japanese Anime & Manga": "31",
+  "Entertainment: Cartoon & Animations": "32",
+};
+
 function App() {
   const [quizParams, setQuizParams] = useState({
     amount: 5,
-    category: "any",
+    category: "any", // Default to "any"
     difficulty: "any",
   });
   const [questions, setQuestions] = useState([]);
@@ -46,9 +75,13 @@ function App() {
     setLoading(true);
     setError("");
     const { amount, category, difficulty } = quizParams;
-    const url = `https://opentdb.com/api.php?amount=${amount}&category=${
-      category === "any" ? "" : category
-    }&difficulty=${difficulty === "any" ? "" : difficulty}&type=multiple`;
+
+    // Map the category name to its numeric ID
+    const categoryId = categoryMapping[category] || "";
+
+    const url = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&difficulty=${
+      difficulty === "any" ? "" : difficulty
+    }&type=multiple`;
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -138,7 +171,7 @@ function App() {
         {!questions.length && !showResults ? (
           <div>
             <h1 className="text-4xl font-bold text-center mb-6 text-blue-600">
-              Select Quizz Parameters
+              Quiz Settings
             </h1>
             <form
               onSubmit={(e) => {
@@ -167,34 +200,55 @@ function App() {
                 <select
                   name="category"
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  onChange={(e) =>
+                    setQuizParams({ ...quizParams, category: e.target.value })
+                  }
                 >
                   <option value="any">Any Category</option>
-                  <option value="9">General Knowledge</option>
-                  <option value="10">Entertainment: Books</option>
-                  <option value="11">Entertainment: Film</option>
-                  <option value="12">Entertainment: Music</option>
-                  <option value="13">Entertainment: Musicals & Theatres</option>
-                  <option value="14">Entertainment: Television</option>
-                  <option value="15">Entertainment: Video Games</option>
-                  <option value="16">Entertainment: Board Games</option>
-                  <option value="17">Science & Nature</option>
-                  <option value="18">Science: Computers</option>
-                  <option value="19">Science: Mathematics</option>
-                  <option value="20">Mythology</option>
-                  <option value="21">Sports</option>
-                  <option value="22">Geography</option>
-                  <option value="23">History</option>
-                  <option value="24">Politics</option>
-                  <option value="25">Art</option>
-                  <option value="26">Celebrities</option>
-                  <option value="27">Animals</option>
-                  <option value="28">Vehicles</option>
-                  <option value="29">Entertainment: Comics</option>
-                  <option value="30">Science: Gadgets</option>
-                  <option value="31">
+                  <option value="General Knowledge">General Knowledge</option>
+                  <option value="Entertainment: Books">
+                    Entertainment: Books
+                  </option>
+                  <option value="Entertainment: Film">
+                    Entertainment: Film
+                  </option>
+                  <option value="Entertainment: Music">
+                    Entertainment: Music
+                  </option>
+                  <option value="Entertainment: Musicals & Theatres">
+                    Entertainment: Musicals & Theatres
+                  </option>
+                  <option value="Entertainment: Television">
+                    Entertainment: Television
+                  </option>
+                  <option value="Entertainment: Video Games">
+                    Entertainment: Video Games
+                  </option>
+                  <option value="Entertainment: Board Games">
+                    Entertainment: Board Games
+                  </option>
+                  <option value="Science & Nature">Science & Nature</option>
+                  <option value="Science: Computers">Science: Computers</option>
+                  <option value="Science: Mathematics">
+                    Science: Mathematics
+                  </option>
+                  <option value="Mythology">Mythology</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Geography">Geography</option>
+                  <option value="History">History</option>
+                  <option value="Politics">Politics</option>
+                  <option value="Art">Art</option>
+                  <option value="Celebrities">Celebrities</option>
+                  <option value="Animals">Animals</option>
+                  <option value="Vehicles">Vehicles</option>
+                  <option value="Entertainment: Comics">
+                    Entertainment: Comics
+                  </option>
+                  <option value="Science: Gadgets">Science: Gadgets</option>
+                  <option value="Entertainment: Japanese Anime & Manga">
                     Entertainment: Japanese Anime & Manga
                   </option>
-                  <option value="32">
+                  <option value="Entertainment: Cartoon & Animations">
                     Entertainment: Cartoon & Animations
                   </option>
                 </select>
@@ -206,6 +260,9 @@ function App() {
                 <select
                   name="difficulty"
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  onChange={(e) =>
+                    setQuizParams({ ...quizParams, difficulty: e.target.value })
+                  }
                 >
                   <option value="any">Any Difficulty</option>
                   <option value="easy">Easy</option>
