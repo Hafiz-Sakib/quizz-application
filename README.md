@@ -66,10 +66,10 @@ Open your browser and navigate to:
   ![Quiz Settings](https://i.postimg.cc/v8jyh4X5/quizzz.png)
 
 - **Quiz In Progress**  
-  ![Quiz In Progress](https://via.placeholder.com/800x400?text=Quiz+In+Progress)
+  ![Quiz In Progress](https://i.postimg.cc/jdXG9C48/prog.png)
 
 - **Quiz Completed Screen**  
-  ![Quiz Completed](https://via.placeholder.com/800x400?text=Quiz+Completed+Screen)
+  ![Quiz Completed](https://i.postimg.cc/mgpKLqqC/Fire-Shot-Capture-002-Quizz-App-localhost.png)
 
 ---
 
