@@ -7,6 +7,25 @@ const decodeHtmlEntity = (str) => {
   return textarea.value;
 };
 
+// Mock data for fallback in case the API fails
+const mockQuestions = [
+  {
+    question: "What is the capital of France?",
+    correct_answer: "Paris",
+    incorrect_answers: ["Berlin", "Madrid", "Rome"],
+  },
+  {
+    question: "Which planet is known as the Red Planet?",
+    correct_answer: "Mars",
+    incorrect_answers: ["Earth", "Jupiter", "Venus"],
+  },
+  {
+    question: "Who wrote 'To Kill a Mockingbird'?",
+    correct_answer: "Harper Lee",
+    incorrect_answers: ["Mark Twain", "J.K. Rowling", "Ernest Hemingway"],
+  },
+];
+
 function App() {
   const [quizParams, setQuizParams] = useState({
     amount: 5,
@@ -18,15 +37,23 @@ function App() {
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null); // Track the selected answer
+  const [feedbackMessage, setFeedbackMessage] = useState(""); // Feedback message for correct/wrong answers
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(""); // Error message
 
   // Fetch questions from OpenTDB API
   const fetchQuestions = async () => {
+    setLoading(true);
+    setError("");
     const { amount, category, difficulty } = quizParams;
     const url = `https://opentdb.com/api.php?amount=${amount}&category=${
       category === "any" ? "" : category
     }&difficulty=${difficulty === "any" ? "" : difficulty}&type=multiple`;
     try {
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
       const data = await response.json();
       if (data.results) {
         // Shuffle answers for each question and decode HTML entities
@@ -42,8 +69,17 @@ function App() {
         }));
         setQuestions(formattedQuestions);
       }
-    } catch (error) {
-      console.error("Error fetching questions:", error);
+    } catch (err) {
+      console.error("Error fetching questions:", err);
+      setError("Failed to fetch questions. Using mock data.");
+      setQuestions(
+        mockQuestions.map((q) => ({
+          ...q,
+          answers: shuffleArray([...q.incorrect_answers, q.correct_answer]),
+        }))
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,6 +96,14 @@ function App() {
   const handleAnswer = (answer, correctAnswer) => {
     setSelectedAnswer(answer); // Set the selected answer
 
+    // Provide feedback (Correct/Wrong)
+    if (answer === correctAnswer) {
+      setScore(score + 1);
+      setFeedbackMessage("Correct! 🎉");
+    } else {
+      setFeedbackMessage("Wrong! ❌");
+    }
+
     // Check if the answer is correct and update the score
     if (answer === correctAnswer) {
       setScore(score + 1);
@@ -71,6 +115,7 @@ function App() {
     if (currentQuestionIndex + 1 < questions.length) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null); // Reset selected answer
+      setFeedbackMessage(""); // Clear feedback message
     } else {
       setShowResults(true); // Show results if all questions are answered
     }
@@ -83,27 +128,24 @@ function App() {
     setScore(0);
     setShowResults(false);
     setSelectedAnswer(null);
+    setFeedbackMessage("");
+    setError("");
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-3xl w-full">
+    <div className="bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 min-h-screen flex items-center justify-center">
+      <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-3xl w-full animate-fade-in">
         {!questions.length && !showResults ? (
           <div>
-            <h1 className="text-3xl font-bold text-center mb-6">
-              Quiz Settings
+            <h1 className="text-4xl font-bold text-center mb-6 text-blue-600">
+              Select Quizz Parameters
             </h1>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setQuizParams({
-                  amount: parseInt(e.target.amount.value),
-                  category: e.target.category.value,
-                  difficulty: e.target.difficulty.value,
-                });
                 fetchQuestions();
               }}
-              className="space-y-4"
+              className="space-y-6"
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -115,7 +157,7 @@ function App() {
                   min="1"
                   max="20"
                   defaultValue="5"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
               <div>
@@ -124,7 +166,7 @@ function App() {
                 </label>
                 <select
                   name="category"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="any">Any Category</option>
                   <option value="9">General Knowledge</option>
@@ -163,7 +205,7 @@ function App() {
                 </label>
                 <select
                   name="difficulty"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 >
                   <option value="any">Any Difficulty</option>
                   <option value="easy">Easy</option>
@@ -173,28 +215,47 @@ function App() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
               >
                 Start Quiz
               </button>
+              {error && (
+                <p className="text-red-500 text-center mt-4">{error}</p>
+              )}
             </form>
           </div>
         ) : showResults ? (
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Quiz Completed!</h1>
+            <h1 className="text-4xl font-bold text-blue-600 mb-4">
+              Quiz Completed!
+            </h1>
             <p className="text-xl text-gray-700 mb-6">
               You scored {score} out of {questions.length}!
             </p>
             <button
               onClick={resetQuiz}
-              className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
             >
               Restart Quiz
             </button>
           </div>
         ) : (
           <div>
-            <h1 className="text-2xl font-bold mb-4">
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full"
+                  style={{
+                    width: `${
+                      ((currentQuestionIndex + 1) / questions.length) * 100
+                    }%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-bold text-blue-600 mb-4">
               Question {currentQuestionIndex + 1}
             </h1>
             <p className="text-gray-700 mb-6">
@@ -211,29 +272,37 @@ function App() {
                     )
                   }
                   disabled={selectedAnswer !== null} // Disable buttons after an answer is selected
-                  className={`w-full py-2 px-4 rounded-md focus:outline-none ${
+                  className={`w-full py-3 px-4 rounded-lg focus:outline-none transition duration-300 ease-in-out ${
                     selectedAnswer === answer
                       ? answer ===
                         questions[currentQuestionIndex].correct_answer
-                        ? "bg-green-500 text-white" // Correct answer
-                        : "bg-red-500 text-white" // Incorrect answer
+                        ? "bg-green-500 text-white scale-105 transform" // Correct answer
+                        : "bg-red-500 text-white scale-105 transform" // Incorrect answer
                       : answer ===
                           questions[currentQuestionIndex].correct_answer &&
                         selectedAnswer !== null
-                      ? "bg-green-500 text-white" // Highlight correct answer if user selects wrong one
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300" // Default state
+                      ? "bg-green-500 text-white scale-105 transform" // Highlight correct answer if user selects wrong one
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300 hover:scale-105 transform" // Default state
                   }`}
                 >
                   {answer}
                 </button>
               ))}
             </div>
+
+            {/* Feedback Message */}
+            {feedbackMessage && (
+              <p className="text-center mt-4 text-lg font-semibold text-blue-600">
+                {feedbackMessage}
+              </p>
+            )}
+
             {/* Next Button */}
             {selectedAnswer !== null && (
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-6">
                 <button
                   onClick={goToNextQuestion}
-                  className="bg-indigo-600 text-white py-3 px-3 rounded-md text-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="bg-blue-600 text-white py-2 px-4 rounded-md text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
                 >
                   {currentQuestionIndex + 1 < questions.length
                     ? "Next Question"
@@ -241,6 +310,11 @@ function App() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+        {loading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
           </div>
         )}
       </div>
