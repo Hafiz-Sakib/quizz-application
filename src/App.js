@@ -284,7 +284,7 @@ function App() {
         ) : showResults ? (
           <div className="text-center">
             <h1 className="text-4xl font-bold text-blue-600 mb-4">
-              Quiz Completed!
+              Quiz Completed ! 🎯
             </h1>
             <p className="text-xl text-gray-700 mb-6">
               You scored {score} out of {questions.length}!

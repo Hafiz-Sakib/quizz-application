@@ -63,7 +63,7 @@ Open your browser and navigate to:
 ## 🎨 Screenshots
 
 - **Quiz Settings Screen**  
-  ![Quiz Settings](https://via.placeholder.com/800x400?text=Quiz+Settings+Screen)
+  ![Quiz Settings](https://i.postimg.cc/v8jyh4X5/quizzz.png)
 
 - **Quiz In Progress**  
   ![Quiz In Progress](https://via.placeholder.com/800x400?text=Quiz+In+Progress)
