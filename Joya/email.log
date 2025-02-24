@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.12.22)  24 FEB 2025 23:25
+This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.12.22)  24 FEB 2025 23:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -98,12 +98,12 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 File: images.jpg Graphic file (type bmp)
 <images.jpg>
 
-Underfull \hbox (badness 10000) in paragraph at lines 19--27
+Underfull \hbox (badness 10000) in paragraph at lines 23--31
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 28--36
+Underfull \hbox (badness 10000) in paragraph at lines 32--40
 
  []
 
@@ -112,23 +112,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 28--36
 [1
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 37--44
+Underfull \hbox (badness 10000) in paragraph at lines 41--48
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 45--51
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 52--60
+Underfull \hbox (badness 10000) in paragraph at lines 49--55
 
  []
 
 
 
 [2]
+Underfull \hbox (badness 10000) in paragraph at lines 56--64
+
+ []
+
+
 
 [3] (email.aux)
  ***********
@@ -139,7 +139,7 @@ L3 programming layer <2024-05-27>
 Here is how much of TeX's memory you used:
  1019 strings out of 409050
  17743 string characters out of 5757214
- 1929560 words of memory out of 5000000
+ 1928560 words of memory out of 5000000
  23704 multiletter control sequences out of 15000+600000
  560845 words of font info for 50 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
