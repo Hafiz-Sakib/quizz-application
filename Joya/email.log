@@ -1,0 +1,148 @@
+This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.12.22)  24 FEB 2025 23:25
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./email.tex
+(email.tex
+LaTeX2e <2024-06-01> patch level 1
+L3 programming layer <2024-05-27>
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
+Document Class: article 2024/02/08 v1.4n Standard LaTeX document class
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/base\size10.clo
+File: size10.clo 2024/02/08 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count190
+\c@section=\count191
+\c@subsection=\count192
+\c@subsubsection=\count193
+\c@paragraph=\count194
+\c@subparagraph=\count195
+\c@figure=\count196
+\c@table=\count197
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen141
+)
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
+Package: inputenc 2024/02/08 v1.3d Input encoding file
+\inpenc@prehook=\toks17
+\inpenc@posthook=\toks18
+
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
+) (C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/setspace\setspace.sty
+Package: setspace 2022/12/04 v6.7b set line spacing
+) (C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks19
+)
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+Package: graphics 2024/05/23 v1.4g Standard LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
+)
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: xetex.def on input line 106.
+
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\xetex.def
+File: xetex.def 2022/09/22 v5.0n Graphics/color driver for xetex
+))
+\Gin@req@height=\dimen142
+\Gin@req@width=\dimen143
+)
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-xet
+ex.def
+File: l3backend-xetex.def 2024-05-08 L3 backend support: XeTeX
+\g__graphics_track_int=\count198
+\l__pdf_internal_box=\box52
+\g__pdf_backend_annotation_int=\count199
+\g__pdf_backend_link_int=\count266
+) (email.aux)
+\openout1 = `email.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 11.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
+1.
+
+(C:\Users\SAKIB\AppData\Local\Programs\MiKTeX\tex/latex/base\ts1cmr.fd
+File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 13.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 13.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 13.
+File: images.jpg Graphic file (type bmp)
+<images.jpg>
+
+Underfull \hbox (badness 10000) in paragraph at lines 19--27
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--36
+
+ []
+
+
+
+[1
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 37--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--60
+
+ []
+
+
+
+[2]
+
+[3] (email.aux)
+ ***********
+LaTeX2e <2024-06-01> patch level 1
+L3 programming layer <2024-05-27>
+ ***********
+ ) 
+Here is how much of TeX's memory you used:
+ 1019 strings out of 409050
+ 17743 string characters out of 5757214
+ 1929560 words of memory out of 5000000
+ 23704 multiletter control sequences out of 15000+600000
+ 560845 words of font info for 50 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 57i,6n,65p,462b,197s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+Output written on email.pdf (3 pages).
