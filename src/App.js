@@ -1,32 +1,36 @@
 import React, { useState } from "react";
+import "./App.css";
 
-// Helper function to decode HTML entities
 const decodeHtmlEntity = (str) => {
   const textarea = document.createElement("textarea");
   textarea.innerHTML = str;
   return textarea.value;
 };
 
-// Mock data for fallback in case the API fails
 const mockQuestions = [
   {
     question: "What is the capital of France?",
     correct_answer: "Paris",
     incorrect_answers: ["Berlin", "Madrid", "Rome"],
+    difficulty: "easy",
+    category: "Geography",
   },
   {
     question: "Which planet is known as the Red Planet?",
     correct_answer: "Mars",
     incorrect_answers: ["Earth", "Jupiter", "Venus"],
+    difficulty: "easy",
+    category: "Science & Nature",
   },
   {
     question: "Who wrote 'To Kill a Mockingbird'?",
     correct_answer: "Harper Lee",
     incorrect_answers: ["Mark Twain", "J.K. Rowling", "Ernest Hemingway"],
+    difficulty: "medium",
+    category: "Entertainment: Books",
   },
 ];
 
-// Map category names to OpenTDB numeric IDs
 const categoryMapping = {
   any: "",
   "General Knowledge": "9",
@@ -55,6 +59,18 @@ const categoryMapping = {
   "Entertainment: Cartoon & Animations": "32",
 };
 
+const LABELS = ["A", "B", "C", "D"];
+
+const getGrade = (score, total) => {
+  const pct = (score / total) * 100;
+  if (pct === 100)
+    return { label: "Perfect Score!", cls: "grade-perfect", emoji: "🏆" };
+  if (pct >= 75)
+    return { label: "Great Job!", cls: "grade-great", emoji: "🌟" };
+  if (pct >= 50) return { label: "Not Bad", cls: "grade-ok", emoji: "👍" };
+  return { label: "Keep Practicing", cls: "grade-poor", emoji: "💪" };
+};
+
 function App() {
   const [quizParams, setQuizParams] = useState({
     amount: 5,
@@ -62,54 +78,52 @@ function App() {
     difficulty: "any",
   });
   const [questions, setQuestions] = useState([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [feedback, setFeedback] = useState(null); // { correct: bool, message: str }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const shuffleArray = (array) => {
-    const cloned = [...array];
-    for (let i = cloned.length - 1; i > 0; i--) {
+  const shuffleArray = (arr) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    return cloned;
+    return a;
   };
 
   const fetchQuestions = async () => {
     setLoading(true);
     setError("");
     const { amount, category, difficulty } = quizParams;
-    const categoryId = categoryMapping[category] || "";
-    const url = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&difficulty=${
-      difficulty === "any" ? "" : difficulty
-    }&type=multiple`;
+    const catId = categoryMapping[category] || "";
+    const diff = difficulty === "any" ? "" : difficulty;
+    const url = `https://opentdb.com/api.php?amount=${amount}&category=${catId}&difficulty=${diff}&type=multiple`;
 
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch questions");
-      }
-      const data = await response.json();
-      if (data.results) {
-        const formattedQuestions = data.results.map((q) => ({
-          ...q,
-          question: decodeHtmlEntity(q.question),
-          correct_answer: decodeHtmlEntity(q.correct_answer),
-          incorrect_answers: q.incorrect_answers.map(decodeHtmlEntity),
-          answers: shuffleArray([
-            ...q.incorrect_answers.map(decodeHtmlEntity),
-            decodeHtmlEntity(q.correct_answer),
-          ]),
-        }));
-        setQuestions(formattedQuestions);
-      }
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
+      if (!data.results?.length) throw new Error("No questions returned");
+      const formatted = data.results.map((q) => ({
+        ...q,
+        question: decodeHtmlEntity(q.question),
+        correct_answer: decodeHtmlEntity(q.correct_answer),
+        incorrect_answers: q.incorrect_answers.map(decodeHtmlEntity),
+        answers: shuffleArray([
+          ...q.incorrect_answers.map(decodeHtmlEntity),
+          decodeHtmlEntity(q.correct_answer),
+        ]),
+      }));
+      setQuestions(formatted);
     } catch (err) {
-      console.error("Error fetching questions:", err);
-      setError("Failed to fetch questions. Using mock data.");
+      console.error(err);
+      setError(
+        "Couldn't reach the quiz server — using sample questions instead.",
+      );
       setQuestions(
         mockQuestions.map((q) => ({
           ...q,
@@ -121,275 +135,394 @@ function App() {
     }
   };
 
-  const handleStartQuiz = (event) => {
-    event.preventDefault();
+  const handleStart = (e) => {
+    e.preventDefault();
     if (quizParams.amount < 1 || quizParams.amount > 20) {
-      setError("Please select between 1 and 20 questions.");
+      setError("Choose between 1 and 20 questions.");
       return;
     }
-    setCurrentQuestionIndex(0);
+    setCurrentIdx(0);
     setScore(0);
-    setSelectedAnswer(null);
-    setFeedbackMessage("");
+    setSelected(null);
+    setFeedback(null);
     setShowResults(false);
     fetchQuestions();
   };
 
-  const handleAnswer = (answer, correctAnswer) => {
-    if (selectedAnswer) return;
-    setSelectedAnswer(answer);
-
-    if (answer === correctAnswer) {
-      setScore((prevScore) => prevScore + 1);
-      setFeedbackMessage("Correct! 🎉 Great choice.");
+  const handleAnswer = (answer) => {
+    if (selected) return;
+    setSelected(answer);
+    const correct = answer === questions[currentIdx].correct_answer;
+    if (correct) {
+      setScore((s) => s + 1);
+      setFeedback({ correct: true, message: "That's correct! Well done." });
     } else {
-      setFeedbackMessage(`Wrong — the correct answer was "${correctAnswer}".`);
+      setFeedback({
+        correct: false,
+        message: `Incorrect. The right answer was "${questions[currentIdx].correct_answer}".`,
+      });
     }
   };
 
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex + 1 < questions.length) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setSelectedAnswer(null);
-      setFeedbackMessage("");
+  const handleNext = () => {
+    if (currentIdx + 1 < questions.length) {
+      setCurrentIdx((i) => i + 1);
+      setSelected(null);
+      setFeedback(null);
     } else {
       setShowResults(true);
     }
   };
 
-  const resetQuiz = () => {
+  const reset = () => {
     setQuestions([]);
-    setCurrentQuestionIndex(0);
+    setCurrentIdx(0);
     setScore(0);
     setShowResults(false);
-    setSelectedAnswer(null);
-    setFeedbackMessage("");
+    setSelected(null);
+    setFeedback(null);
     setError("");
   };
+
+  const currentQ = questions[currentIdx];
+  const grade = showResults ? getGrade(score, questions.length) : null;
 
   return (
     <div className="app-wrapper">
       <div className="quiz-card">
-        {!questions.length && !showResults ? (
-          <div className="start-screen">
-            <div className="badge">Interactive Quiz</div>
-            <h1 className="section-title">Ready for a quick challenge?</h1>
-            <p className="subtitle">
-              Pick your preferences and launch a quiz with instant feedback.
-            </p>
+        {/* Top bar */}
+        <div className="card-topbar">
+          <div className="topbar-brand">
+            <div className="brand-dot" />
+            QuizPro
+          </div>
+          <div className="topbar-badge">✦ Premium</div>
+        </div>
 
-            <form onSubmit={handleStartQuiz} className="controls-grid">
-              <div className="control-group">
-                <label htmlFor="amount">Number of Questions</label>
-                <input
-                  id="amount"
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={quizParams.amount}
-                  onChange={(e) =>
-                    setQuizParams({
-                      ...quizParams,
-                      amount: Number(e.target.value),
-                    })
-                  }
-                  className="input-field"
-                />
-                <div className="hint">
-                  Answer {quizParams.amount} question
-                  {quizParams.amount !== 1 ? "s" : ""} in one session.
+        <div className="card-body">
+          {/* ── START SCREEN ── */}
+          {!questions.length && !showResults && (
+            <div className="start-screen">
+              <div className="screen-eyebrow">
+                <div className="eyebrow-line" />
+                Knowledge Challenge
+                <div className="eyebrow-line" />
+              </div>
+
+              <h1 className="screen-title">
+                Test your <span>limits</span>.
+              </h1>
+              <p className="screen-subtitle">
+                Pick your settings and take on a curated quiz. Instant feedback,
+                real-time scoring, and a detailed summary await.
+              </p>
+
+              <form onSubmit={handleStart} className="controls-grid">
+                <div className="control-group">
+                  <label htmlFor="amount">No. of Questions</label>
+                  <input
+                    id="amount"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={quizParams.amount}
+                    onChange={(e) =>
+                      setQuizParams({
+                        ...quizParams,
+                        amount: Number(e.target.value),
+                      })
+                    }
+                    className="input-field"
+                  />
+                  <span className="hint-text">
+                    {quizParams.amount} question
+                    {quizParams.amount !== 1 ? "s" : ""} per session
+                  </span>
+                </div>
+
+                <div className="control-group">
+                  <label htmlFor="difficulty">Difficulty</label>
+                  <div className="select-wrapper">
+                    <select
+                      id="difficulty"
+                      value={quizParams.difficulty}
+                      onChange={(e) =>
+                        setQuizParams({
+                          ...quizParams,
+                          difficulty: e.target.value,
+                        })
+                      }
+                      className="select-field"
+                    >
+                      <option value="any">Any Difficulty</option>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="control-group" style={{ gridColumn: "1 / -1" }}>
+                  <label htmlFor="category">Category</label>
+                  <div className="select-wrapper">
+                    <select
+                      id="category"
+                      value={quizParams.category}
+                      onChange={(e) =>
+                        setQuizParams({
+                          ...quizParams,
+                          category: e.target.value,
+                        })
+                      }
+                      className="select-field"
+                    >
+                      <option value="any">Any Category</option>
+                      <option value="General Knowledge">
+                        General Knowledge
+                      </option>
+                      <option value="Entertainment: Books">
+                        Entertainment: Books
+                      </option>
+                      <option value="Entertainment: Film">
+                        Entertainment: Film
+                      </option>
+                      <option value="Entertainment: Music">
+                        Entertainment: Music
+                      </option>
+                      <option value="Entertainment: Musicals & Theatres">
+                        Musicals & Theatres
+                      </option>
+                      <option value="Entertainment: Television">
+                        Entertainment: Television
+                      </option>
+                      <option value="Entertainment: Video Games">
+                        Video Games
+                      </option>
+                      <option value="Entertainment: Board Games">
+                        Board Games
+                      </option>
+                      <option value="Science & Nature">Science & Nature</option>
+                      <option value="Science: Computers">
+                        Science: Computers
+                      </option>
+                      <option value="Science: Mathematics">
+                        Science: Mathematics
+                      </option>
+                      <option value="Mythology">Mythology</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Geography">Geography</option>
+                      <option value="History">History</option>
+                      <option value="Politics">Politics</option>
+                      <option value="Art">Art</option>
+                      <option value="Celebrities">Celebrities</option>
+                      <option value="Animals">Animals</option>
+                      <option value="Vehicles">Vehicles</option>
+                      <option value="Entertainment: Comics">Comics</option>
+                      <option value="Science: Gadgets">Science: Gadgets</option>
+                      <option value="Entertainment: Japanese Anime & Manga">
+                        Anime & Manga
+                      </option>
+                      <option value="Entertainment: Cartoon & Animations">
+                        Cartoons & Animations
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ gridColumn: "1 / -1" }}
+                >
+                  <svg
+                    className="btn-icon"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polygon
+                      points="5,3 19,10 5,17"
+                      fill="currentColor"
+                      stroke="none"
+                    />
+                  </svg>
+                  Launch Quiz
+                </button>
+
+                {error && <div className="error-message">{error}</div>}
+              </form>
+            </div>
+          )}
+
+          {/* ── QUESTION SCREEN ── */}
+          {questions.length > 0 && !showResults && currentQ && (
+            <div className="question-screen">
+              <div className="q-topbar">
+                <div className="q-counter">
+                  Question <strong>{currentIdx + 1}</strong> /{" "}
+                  {questions.length}
+                </div>
+                <div className="score-pill">
+                  <span className="score-icon">⚡</span>
+                  Score: {score}
                 </div>
               </div>
 
-              <div className="control-group">
-                <label htmlFor="category">Category</label>
-                <select
-                  id="category"
-                  value={quizParams.category}
-                  onChange={(e) =>
-                    setQuizParams({ ...quizParams, category: e.target.value })
-                  }
-                  className="select-field"
-                >
-                  <option value="any">Any Category</option>
-                  <option value="General Knowledge">General Knowledge</option>
-                  <option value="Entertainment: Books">
-                    Entertainment: Books
-                  </option>
-                  <option value="Entertainment: Film">
-                    Entertainment: Film
-                  </option>
-                  <option value="Entertainment: Music">
-                    Entertainment: Music
-                  </option>
-                  <option value="Entertainment: Musicals & Theatres">
-                    Entertainment: Musicals & Theatres
-                  </option>
-                  <option value="Entertainment: Television">
-                    Entertainment: Television
-                  </option>
-                  <option value="Entertainment: Video Games">
-                    Entertainment: Video Games
-                  </option>
-                  <option value="Entertainment: Board Games">
-                    Entertainment: Board Games
-                  </option>
-                  <option value="Science & Nature">Science & Nature</option>
-                  <option value="Science: Computers">Science: Computers</option>
-                  <option value="Science: Mathematics">
-                    Science: Mathematics
-                  </option>
-                  <option value="Mythology">Mythology</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Geography">Geography</option>
-                  <option value="History">History</option>
-                  <option value="Politics">Politics</option>
-                  <option value="Art">Art</option>
-                  <option value="Celebrities">Celebrities</option>
-                  <option value="Animals">Animals</option>
-                  <option value="Vehicles">Vehicles</option>
-                  <option value="Entertainment: Comics">
-                    Entertainment: Comics
-                  </option>
-                  <option value="Science: Gadgets">Science: Gadgets</option>
-                  <option value="Entertainment: Japanese Anime & Manga">
-                    Entertainment: Japanese Anime & Manga
-                  </option>
-                  <option value="Entertainment: Cartoon & Animations">
-                    Entertainment: Cartoon & Animations
-                  </option>
-                </select>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${((currentIdx + 1) / questions.length) * 100}%`,
+                  }}
+                />
               </div>
 
-              <div className="control-group">
-                <label htmlFor="difficulty">Difficulty</label>
-                <select
-                  id="difficulty"
-                  value={quizParams.difficulty}
-                  onChange={(e) =>
-                    setQuizParams({ ...quizParams, difficulty: e.target.value })
-                  }
-                  className="select-field"
-                >
-                  <option value="any">Any Difficulty</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="button button-primary full-width"
-              >
-                Start Quiz
-              </button>
-              {error && <p className="error-message">{error}</p>}
-            </form>
-          </div>
-        ) : showResults ? (
-          <div className="results-screen">
-            <div className="badge badge-success">Finished</div>
-            <h1 className="section-title">Quiz Completed! 🎉</h1>
-            <p className="subtitle">
-              You scored {score} out of {questions.length} correct.
-            </p>
-            <div className="result-metrics">
-              <span className="metric-card">Questions: {questions.length}</span>
-              <span className="metric-card">Points: {score}</span>
-            </div>
-            <button onClick={resetQuiz} className="button button-primary">
-              Restart Quiz
-            </button>
-          </div>
-        ) : (
-          <div className="question-screen">
-            <div className="quiz-header">
-              <div>
-                <p className="meta-label">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </p>
-                <h2 className="question-title">
-                  {questions[currentQuestionIndex].question}
-                </h2>
-              </div>
-              <div className="score-chip">Score: {score}</div>
-            </div>
-
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-                }}
-              />
-            </div>
-
-            <div className="answers-grid">
-              {questions[currentQuestionIndex].answers.map((answer, index) => {
-                const isCorrect =
-                  answer === questions[currentQuestionIndex].correct_answer;
-                const isSelected = selectedAnswer === answer;
-                const isDisabled = selectedAnswer !== null;
-                let answerClass = "answer-button";
-
-                if (isDisabled) {
-                  if (isSelected && isCorrect) answerClass += " correct";
-                  else if (isSelected && !isCorrect)
-                    answerClass += " incorrect";
-                  else if (isCorrect) answerClass += " correct";
-                  else answerClass += " disabled";
-                }
-
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() =>
-                      handleAnswer(
-                        answer,
-                        questions[currentQuestionIndex].correct_answer,
-                      )
-                    }
-                    disabled={isDisabled}
-                    className={answerClass}
-                  >
-                    {answer}
-                  </button>
-                );
-              })}
-            </div>
-
-            {feedbackMessage && (
-              <div className="feedback">{feedbackMessage}</div>
-            )}
-
-            <div className="actions-row">
-              <button
-                type="button"
-                onClick={resetQuiz}
-                className="button button-secondary"
-              >
-                Start Over
-              </button>
-              {selectedAnswer !== null && (
-                <button
-                  type="button"
-                  onClick={goToNextQuestion}
-                  className="button button-primary"
-                >
-                  {currentQuestionIndex + 1 < questions.length
-                    ? "Next Question"
-                    : "Finish Quiz"}
-                </button>
+              {currentQ.difficulty && currentQ.difficulty !== "any" && (
+                <div className={`difficulty-tag ${currentQ.difficulty}`}>
+                  {currentQ.difficulty === "easy" && "● "}
+                  {currentQ.difficulty === "medium" && "●● "}
+                  {currentQ.difficulty === "hard" && "●●● "}
+                  {currentQ.difficulty}
+                </div>
               )}
-            </div>
-          </div>
-        )}
 
+              <h2 className="question-text">{currentQ.question}</h2>
+
+              <div className="answers-grid">
+                {currentQ.answers.map((answer, i) => {
+                  const isCorrect = answer === currentQ.correct_answer;
+                  const isSelected = selected === answer;
+                  let cls = "answer-btn";
+                  if (selected) {
+                    if (isCorrect) cls += " correct";
+                    else if (isSelected) cls += " incorrect";
+                    else cls += " dimmed";
+                  }
+                  return (
+                    <button
+                      key={i}
+                      className={cls}
+                      onClick={() => handleAnswer(answer)}
+                      disabled={!!selected}
+                      type="button"
+                    >
+                      <span className="answer-label">{LABELS[i]}</span>
+                      {answer}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {feedback && (
+                <div
+                  className={`feedback-box ${feedback.correct ? "correct-fb" : "wrong-fb"}`}
+                >
+                  <span className="feedback-icon">
+                    {feedback.correct ? "✓" : "✗"}
+                  </span>
+                  {feedback.message}
+                </div>
+              )}
+
+              <div className="actions-row">
+                <button type="button" onClick={reset} className="btn btn-ghost">
+                  ← Start Over
+                </button>
+                {selected && (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="btn btn-primary"
+                    style={{ width: "auto" }}
+                  >
+                    {currentIdx + 1 < questions.length
+                      ? "Next Question"
+                      : "See Results"}
+                    <svg
+                      className="btn-icon"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M7 4l6 6-6 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── RESULTS SCREEN ── */}
+          {showResults && grade && (
+            <div className="results-screen">
+              <span className="results-trophy">{grade.emoji}</span>
+
+              <div className={`results-grade ${grade.cls}`}>{grade.label}</div>
+
+              <h1 className="screen-title">Quiz Complete</h1>
+              <p className="screen-subtitle">
+                You answered{" "}
+                <strong style={{ color: "var(--white)" }}>
+                  {score} out of {questions.length}
+                </strong>{" "}
+                questions correctly.
+              </p>
+
+              <div className="stats-row">
+                <div className="stat-card">
+                  <div className="stat-value accent">{questions.length}</div>
+                  <div className="stat-label">Questions</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value success">{score}</div>
+                  <div className="stat-label">Correct</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value gold">
+                    {Math.round((score / questions.length) * 100)}%
+                  </div>
+                  <div className="stat-label">Accuracy</div>
+                </div>
+              </div>
+
+              <div className="results-actions">
+                <button onClick={reset} className="btn btn-primary">
+                  <svg
+                    className="btn-icon"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Play Again
+                </button>
+                <button onClick={reset} className="btn btn-ghost">
+                  Change Settings
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Loading overlay */}
         {loading && (
           <div className="loader-overlay">
-            <div className="loader" />
+            <div className="loader-ring" />
+            <span className="loader-text">Fetching questions…</span>
           </div>
         )}
       </div>
