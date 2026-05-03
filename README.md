@@ -9,7 +9,7 @@
 
 ## 🎥 Demo
 
-![Website Demo](https://i.postimg.cc/v8jyh4X5/quizzz.png)
+![Website Demo](./assets%20for%20readme/1.png)
 
 ---
 
@@ -63,13 +63,13 @@ Open your browser and navigate to:
 ## 🎨 Screenshots
 
 - **Quiz Settings Screen**  
-  ![Quiz Settings](https://i.postimg.cc/v8jyh4X5/quizzz.png)
+  ![Quiz Settings](./assets%20for%20readme/1.png)
 
 - **Quiz In Progress**  
-  ![Quiz In Progress](https://i.postimg.cc/jdXG9C48/prog.png)
+  ![Quiz In Progress](./assets%20for%20readme/2.png)
 
 - **Quiz Completed Screen**  
-  ![Quiz Completed](https://i.postimg.cc/mgpKLqqC/Fire-Shot-Capture-002-Quizz-App-localhost.png)
+  ![Quiz Completed](./assets%20for%20readme/3.png)
 
 ---
 
