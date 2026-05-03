@@ -58,30 +58,36 @@ const categoryMapping = {
 function App() {
   const [quizParams, setQuizParams] = useState({
     amount: 5,
-    category: "any", // Default to "any"
+    category: "any",
     difficulty: "any",
   });
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState(null); // Track the selected answer
-  const [feedbackMessage, setFeedbackMessage] = useState(""); // Feedback message for correct/wrong answers
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(""); // Error message
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Fetch questions from OpenTDB API
+  const shuffleArray = (array) => {
+    const cloned = [...array];
+    for (let i = cloned.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+    }
+    return cloned;
+  };
+
   const fetchQuestions = async () => {
     setLoading(true);
     setError("");
     const { amount, category, difficulty } = quizParams;
-
-    // Map the category name to its numeric ID
     const categoryId = categoryMapping[category] || "";
-
     const url = `https://opentdb.com/api.php?amount=${amount}&category=${categoryId}&difficulty=${
       difficulty === "any" ? "" : difficulty
     }&type=multiple`;
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -89,7 +95,6 @@ function App() {
       }
       const data = await response.json();
       if (data.results) {
-        // Shuffle answers for each question and decode HTML entities
         const formattedQuestions = data.results.map((q) => ({
           ...q,
           question: decodeHtmlEntity(q.question),
@@ -109,52 +114,49 @@ function App() {
         mockQuestions.map((q) => ({
           ...q,
           answers: shuffleArray([...q.incorrect_answers, q.correct_answer]),
-        }))
+        })),
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Shuffle array using Fisher-Yates algorithm
-  const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+  const handleStartQuiz = (event) => {
+    event.preventDefault();
+    if (quizParams.amount < 1 || quizParams.amount > 20) {
+      setError("Please select between 1 and 20 questions.");
+      return;
     }
-    return array;
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setSelectedAnswer(null);
+    setFeedbackMessage("");
+    setShowResults(false);
+    fetchQuestions();
   };
 
-  // Handle answer selection
   const handleAnswer = (answer, correctAnswer) => {
-    setSelectedAnswer(answer); // Set the selected answer
+    if (selectedAnswer) return;
+    setSelectedAnswer(answer);
 
-    // Provide feedback (Correct/Wrong)
     if (answer === correctAnswer) {
-      setScore(score + 1);
-      setFeedbackMessage("Correct! 🎉");
+      setScore((prevScore) => prevScore + 1);
+      setFeedbackMessage("Correct! 🎉 Great choice.");
     } else {
-      setFeedbackMessage("Wrong! ❌");
-    }
-
-    // Check if the answer is correct and update the score
-    if (answer === correctAnswer) {
-      setScore(score + 1);
+      setFeedbackMessage(`Wrong — the correct answer was "${correctAnswer}".`);
     }
   };
 
-  // Move to the next question when "Next" button is clicked
   const goToNextQuestion = () => {
     if (currentQuestionIndex + 1 < questions.length) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedAnswer(null); // Reset selected answer
-      setFeedbackMessage(""); // Clear feedback message
+      setCurrentQuestionIndex((prev) => prev + 1);
+      setSelectedAnswer(null);
+      setFeedbackMessage("");
     } else {
-      setShowResults(true); // Show results if all questions are answered
+      setShowResults(true);
     }
   };
 
-  // Reset quiz
   const resetQuiz = () => {
     setQuestions([]);
     setCurrentQuestionIndex(0);
@@ -166,43 +168,48 @@ function App() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 min-h-screen flex items-center justify-center">
-      <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-3xl w-full animate-fade-in">
+    <div className="app-wrapper">
+      <div className="quiz-card">
         {!questions.length && !showResults ? (
-          <div>
-            <h1 className="text-4xl font-bold text-center mb-6 text-blue-600">
-              Quiz Settings
-            </h1>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                fetchQuestions();
-              }}
-              className="space-y-6"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Number of Questions (Max 20)
-                </label>
+          <div className="start-screen">
+            <div className="badge">Interactive Quiz</div>
+            <h1 className="section-title">Ready for a quick challenge?</h1>
+            <p className="subtitle">
+              Pick your preferences and launch a quiz with instant feedback.
+            </p>
+
+            <form onSubmit={handleStartQuiz} className="controls-grid">
+              <div className="control-group">
+                <label htmlFor="amount">Number of Questions</label>
                 <input
+                  id="amount"
                   type="number"
-                  name="amount"
                   min="1"
                   max="20"
-                  defaultValue="5"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={quizParams.amount}
+                  onChange={(e) =>
+                    setQuizParams({
+                      ...quizParams,
+                      amount: Number(e.target.value),
+                    })
+                  }
+                  className="input-field"
                 />
+                <div className="hint">
+                  Answer {quizParams.amount} question
+                  {quizParams.amount !== 1 ? "s" : ""} in one session.
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Category
-                </label>
+
+              <div className="control-group">
+                <label htmlFor="category">Category</label>
                 <select
-                  name="category"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  id="category"
+                  value={quizParams.category}
                   onChange={(e) =>
                     setQuizParams({ ...quizParams, category: e.target.value })
                   }
+                  className="select-field"
                 >
                   <option value="any">Any Category</option>
                   <option value="General Knowledge">General Knowledge</option>
@@ -253,16 +260,16 @@ function App() {
                   </option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Difficulty
-                </label>
+
+              <div className="control-group">
+                <label htmlFor="difficulty">Difficulty</label>
                 <select
-                  name="difficulty"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  id="difficulty"
+                  value={quizParams.difficulty}
                   onChange={(e) =>
                     setQuizParams({ ...quizParams, difficulty: e.target.value })
                   }
+                  className="select-field"
                 >
                   <option value="any">Any Difficulty</option>
                   <option value="easy">Easy</option>
@@ -270,108 +277,119 @@ function App() {
                   <option value="hard">Hard</option>
                 </select>
               </div>
+
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+                className="button button-primary full-width"
               >
                 Start Quiz
               </button>
-              {error && (
-                <p className="text-red-500 text-center mt-4">{error}</p>
-              )}
+              {error && <p className="error-message">{error}</p>}
             </form>
           </div>
         ) : showResults ? (
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">
-              Quiz Completed ! 🎯
-            </h1>
-            <p className="text-xl text-gray-700 mb-6">
-              You scored {score} out of {questions.length}!
+          <div className="results-screen">
+            <div className="badge badge-success">Finished</div>
+            <h1 className="section-title">Quiz Completed! 🎉</h1>
+            <p className="subtitle">
+              You scored {score} out of {questions.length} correct.
             </p>
-            <button
-              onClick={resetQuiz}
-              className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-            >
+            <div className="result-metrics">
+              <span className="metric-card">Questions: {questions.length}</span>
+              <span className="metric-card">Points: {score}</span>
+            </div>
+            <button onClick={resetQuiz} className="button button-primary">
               Restart Quiz
             </button>
           </div>
         ) : (
-          <div>
-            {/* Progress Bar Indicator */}
-            <div className="mb-4">
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{
-                    width: `${
-                      ((currentQuestionIndex + 1) / questions.length) * 100
-                    }%`,
-                  }}
-                ></div>
+          <div className="question-screen">
+            <div className="quiz-header">
+              <div>
+                <p className="meta-label">
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </p>
+                <h2 className="question-title">
+                  {questions[currentQuestionIndex].question}
+                </h2>
               </div>
+              <div className="score-chip">Score: {score}</div>
             </div>
 
-            <h1 className="text-2xl font-bold text-blue-600 mb-4">
-              Question {currentQuestionIndex + 1}
-            </h1>
-            <p className="text-gray-700 mb-6">
-              {questions[currentQuestionIndex].question}
-            </p>
-            <div className="space-y-2">
-              {questions[currentQuestionIndex].answers.map((answer, index) => (
-                <button
-                  key={index}
-                  onClick={() =>
-                    handleAnswer(
-                      answer,
-                      questions[currentQuestionIndex].correct_answer
-                    )
-                  }
-                  disabled={selectedAnswer !== null} // Disable buttons after an answer is selected
-                  className={`w-full py-3 px-4 rounded-lg focus:outline-none transition duration-300 ease-in-out ${
-                    selectedAnswer === answer
-                      ? answer ===
-                        questions[currentQuestionIndex].correct_answer
-                        ? "bg-green-500 text-white scale-105 transform" // Correct answer
-                        : "bg-red-500 text-white scale-105 transform" // Incorrect answer
-                      : answer ===
-                          questions[currentQuestionIndex].correct_answer &&
-                        selectedAnswer !== null
-                      ? "bg-green-500 text-white scale-105 transform" // Highlight correct answer if user selects wrong one
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300 hover:scale-105 transform" // Default state
-                  }`}
-                >
-                  {answer}
-                </button>
-              ))}
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+                }}
+              />
             </div>
 
-            {/* Feedback Message */}
+            <div className="answers-grid">
+              {questions[currentQuestionIndex].answers.map((answer, index) => {
+                const isCorrect =
+                  answer === questions[currentQuestionIndex].correct_answer;
+                const isSelected = selectedAnswer === answer;
+                const isDisabled = selectedAnswer !== null;
+                let answerClass = "answer-button";
+
+                if (isDisabled) {
+                  if (isSelected && isCorrect) answerClass += " correct";
+                  else if (isSelected && !isCorrect)
+                    answerClass += " incorrect";
+                  else if (isCorrect) answerClass += " correct";
+                  else answerClass += " disabled";
+                }
+
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() =>
+                      handleAnswer(
+                        answer,
+                        questions[currentQuestionIndex].correct_answer,
+                      )
+                    }
+                    disabled={isDisabled}
+                    className={answerClass}
+                  >
+                    {answer}
+                  </button>
+                );
+              })}
+            </div>
+
             {feedbackMessage && (
-              <p className="text-center mt-4 text-lg font-semibold text-blue-600">
-                {feedbackMessage}
-              </p>
+              <div className="feedback">{feedbackMessage}</div>
             )}
 
-            {/* Next Button */}
-            {selectedAnswer !== null && (
-              <div className="flex justify-end mt-6">
+            <div className="actions-row">
+              <button
+                type="button"
+                onClick={resetQuiz}
+                className="button button-secondary"
+              >
+                Start Over
+              </button>
+              {selectedAnswer !== null && (
                 <button
+                  type="button"
                   onClick={goToNextQuestion}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-md text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out"
+                  className="button button-primary"
                 >
                   {currentQuestionIndex + 1 < questions.length
                     ? "Next Question"
                     : "Finish Quiz"}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
+
         {loading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+          <div className="loader-overlay">
+            <div className="loader" />
           </div>
         )}
       </div>
